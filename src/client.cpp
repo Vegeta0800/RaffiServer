@@ -43,10 +43,8 @@ ClientState& Client::GetState()
 void Client::ReceiveMessage()
 {
 	//Initialize buffer
-	int iResult = 0;
+	int iResult = 0; 
 	char buffer[DEFAULT_BUFFLENGTH];
-
-	Message mess;
 
 	//While client is still connected:
 	while (this->state != ClientState::DISCONNECTED)
@@ -62,19 +60,19 @@ void Client::ReceiveMessage()
 		//If message has content and receive didnt fail
 		if (iResult > 0)
 		{
-			//Get message type and cast to handle accordingly.
-			mess = *reinterpret_cast<Message*>(buffer);
-			switch (static_cast<ClientState>(mess.type))
+			//Check message type
+			switch (static_cast<MessageType>(reinterpret_cast<Message*>(buffer)->type))
 			{
-			case ClientState::CONNECTED :
-				{
-					this->HandleLogin(reinterpret_cast<Query*>(buffer));
-					break;
-				}
+			case MessageType::QUERY: //If Query:
+			{
+				this->HandleLogin(reinterpret_cast<Query*>(buffer)); //Handle login with Query recast
+				break;
+			}
 			}
 		}
 		else
 		{
+			//Else disconnect because the receive failed
 			this->Disconnect("receive failed: %d\n", WSAGetLastError());
 		}
 	}
@@ -84,37 +82,46 @@ void Client::Send(Message* message)
 {
 	int iResult = 0;
 
-	switch (message->type)
+	//Check message type
+	switch (static_cast<MessageType>(message->type))
 	{
-	case 10:
+	case MessageType::QUERYRESP: //If query response
 	{
-		QueryResponse* resp = reinterpret_cast<QueryResponse*>(message);
-		iResult = send(this->info.socket, reinterpret_cast<const char*>(resp), sizeof(QueryResponse), 0);
-		resp = nullptr;
+		//Send message as a reinterpreted query response, that gets reinterpreted as an const char*, to the client
+		iResult = send(this->info.socket, reinterpret_cast<const char*>(reinterpret_cast<QueryResponse*>(message)), sizeof(QueryResponse), 0);
 		break;
 	}
 	}
 
+	//Afterwards delete the message
 	delete message;
-
+	
+	//If sending was succesful
 	if (iResult > 0)
 	{
 		printf("Success!, Sent %d bytes to %s.\n", iResult, this->info.ip_addr);
 	}
 	else
 	{
+		//Else disconnect because the sending failed
 		this->Disconnect("send failed: %d\n", WSAGetLastError());
 	}
-
-	this->Disconnect("End");
 }
 
 //Handle Login message
 void Client::HandleLogin(Query* query)
 {
+	//Get local copy of query
 	Query q = *query;
-
 	printf("LoginName: %s, Password: %s\n", q.name, q.password);
+
+	//Create query response
+	QueryResponse* resp = new QueryResponse();
+	resp->type = static_cast<uint8_t>(MessageType::QUERYRESP);
+	resp->success = true;
+
+	//Send response
+	this->Send(resp);
 }
 
 //Shutdown connection

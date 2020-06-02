@@ -49,3 +49,19 @@ struct ClientInfo
 		return (socket == NULL && clientID == 255 && ip_addr == nullptr);
 	}
 };
+
+//Message types that get send over network
+enum class MessageType
+{
+	QUERY = 0,
+	CREATEROOM = 1,
+	JOINROOM = 2,
+	LEAVEROOM = 3,
+	READY = 4,
+	START = 5,
+	QUERYRESP = 6,
+	CREATEROOMRESP = 7,
+	JOINROOMRESP = 8,
+	LEAVEROOMRESP = 9,
+	READYRESP = 10
+};
