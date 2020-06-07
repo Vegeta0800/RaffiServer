@@ -43,12 +43,18 @@ public:
 	void ChangeBestSlot(uint8_t slot);
 
 
+	//Get all ClientInfos
+	std::vector<ClientInfo>& GetAllClientInfos();
+	//Get all ClientInfos
+	std::vector<Client*>& GetAllClients();
 	//Get server socket
 	SOCKET GetSocket();
 	//Get socket of a specific client
 	SOCKET GetSocketOfClient(uint8_t clientID);
 	//Get IP address of a specific client
 	const char* GetClientIP(uint8_t clientID);
+	//Get client pointer to a specifc client
+	Client* GetClient(uint8_t clientID);
 
 protected:
 	//Static server instance
@@ -72,7 +78,7 @@ private:
 	//Variables:
 	std::vector<std::thread> clientThreads;
 	std::vector<ClientInfo> activeClientsInfo;
-	std::vector<Client> activeClients;
+	std::vector<Client*> activeClients;
 
 	SOCKET listenSocket = NULL;
 

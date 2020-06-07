@@ -43,6 +43,16 @@ void Server::ChangeBestSlot(uint8_t id)
 }
 
 
+//Get all ClientInfos
+std::vector<ClientInfo>& Server::GetAllClientInfos()
+{
+	return this->activeClientsInfo;
+}
+//Get all Clients
+std::vector<Client*>& Server::GetAllClients()
+{
+	return this->activeClients;
+}
 //Get server socket
 SOCKET Server::GetSocket()
 {
@@ -58,7 +68,11 @@ const char* Server::GetClientIP(uint8_t clientID)
 {
 	return this->activeClientsInfo[clientID].ip_addr;
 }
-
+//Get client pointer to a specifc client
+Client* Server::GetClient(uint8_t clientID)
+{
+	return this->activeClients[clientID];
+}
 
 
 ///PRIVATE FUNCTIONS:
@@ -224,6 +238,12 @@ void Server::CloseServer()
 	this->clientThreads.clear();
 	this->activeClientsInfo.clear();
 
+	for (uint8_t i = 0; i < this->activeClients.size(); i++)
+	{
+		this->activeClients[i]->Disconnect("End\n");
+		delete this->activeClients[i];
+	}
+
 	//Close Socket and Cleanup.
 	closesocket(this->listenSocket);
 	WSACleanup();
@@ -232,12 +252,8 @@ void Server::CloseServer()
 void Server::AcceptClient(ClientInfo info, bool old)
 {
 	printf("Client with ID %d logged in succesfully \n", info.clientID);
-
-	//If slot had a client before, exchange it for a new one. Otherwise add to back.
-	if (old)
-		this->activeClients[info.clientID] = Client(info);
-	else
-		this->activeClients.push_back(Client(info));
+	//Create new client on heap
+	Client* client = new Client(info, old);
 }
 
 
